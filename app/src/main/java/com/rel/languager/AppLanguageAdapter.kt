@@ -3,6 +3,7 @@ package com.rel.languager
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -52,11 +53,28 @@ class AppLanguageAdapter(
         holder.packageName.maxLines = 1
 
         // Create language spinner adapter
-        val spinnerAdapter = ArrayAdapter(
+        val spinnerAdapter = object : ArrayAdapter<String>(
             context,
             android.R.layout.simple_spinner_item,
             availableLanguages.map { it.second }
-        ).apply {
+        ) {
+            override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                val view = super.getView(position, convertView, parent)
+                val textView = view.findViewById<TextView>(android.R.id.text1)
+                // Show language code in the selected view
+                val languageCode = availableLanguages[position].first
+                textView.text = "$languageCode"
+                return view
+            }
+
+            override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View {
+                val view = super.getDropDownView(position, convertView, parent)
+                val textView = view.findViewById<TextView>(android.R.id.text1)
+                // Show full language name in dropdown
+                textView.text = availableLanguages[position].second
+                return view
+            }
+        }.apply {
             setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         }
         holder.languageSpinner.adapter = spinnerAdapter
