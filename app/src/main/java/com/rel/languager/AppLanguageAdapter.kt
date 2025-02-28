@@ -21,6 +21,7 @@ class AppLanguageAdapter(
 
     private val packageManager: PackageManager = context.packageManager
     private val availableLanguages = LanguageUtils.getAvailableLanguages()
+    private var fullAppList: List<ApplicationInfo> = appList.toList()
 
     class AppViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val appIcon: ImageView = view.findViewById(R.id.app_icon)
@@ -41,8 +42,14 @@ class AppLanguageAdapter(
 
         // Set app icon and name
         holder.appIcon.setImageDrawable(app.loadIcon(packageManager))
-        holder.appName.text = app.loadLabel(packageManager)
+        holder.appName.text = app.loadLabel(packageManager).toString()
         holder.packageName.text = packageName
+        
+        // Ensure text doesn't overflow
+        holder.appName.ellipsize = android.text.TextUtils.TruncateAt.END
+        holder.appName.maxLines = 1
+        holder.packageName.ellipsize = android.text.TextUtils.TruncateAt.END
+        holder.packageName.maxLines = 1
 
         // Create language spinner adapter
         val spinnerAdapter = ArrayAdapter(
@@ -74,6 +81,21 @@ class AppLanguageAdapter(
     // Method to update the list for filtering
     fun updateList(newList: List<ApplicationInfo>) {
         appList = newList
+        fullAppList = newList.toList()
+        notifyDataSetChanged()
+    }
+
+    // Method to filter the list based on user input
+    fun filter(query: String) {
+        val filteredList = if (query.isEmpty()) {
+            fullAppList
+        } else {
+            fullAppList.filter { app -> 
+                app.loadLabel(packageManager).toString().contains(query, ignoreCase = true) || 
+                app.packageName.contains(query, ignoreCase = true)
+            }
+        }
+        appList = filteredList
         notifyDataSetChanged()
     }
 

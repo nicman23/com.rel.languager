@@ -3,6 +3,7 @@ package com.rel.languager
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ProgressBar
@@ -156,35 +157,47 @@ class ActivityMain : AppCompatActivity() {
     }
 
     private fun loadEnabledApps() {
+        Log.d("Languager", "Starting to load enabled apps")
         loadingProgress.visibility = View.VISIBLE
         appListRecyclerView.visibility = View.GONE
         noAppsText.visibility = View.GONE
 
         mainScope.launch {
-            val enabledAppsList = withContext(Dispatchers.IO) {
-                getEnabledApps()
-            }
+            try {
+                val enabledAppsList = withContext(Dispatchers.IO) {
+                    getEnabledApps()
+                }
 
-            enabledApps.clear()
-            enabledApps.addAll(enabledAppsList)
+                Log.d("Languager", "Received ${enabledAppsList.size} apps from getEnabledApps")
+                enabledApps.clear()
+                enabledApps.addAll(enabledAppsList)
 
-            if (enabledApps.isEmpty()) {
+                if (enabledApps.isEmpty()) {
+                    Log.w("Languager", "No apps found to display")
+                    loadingProgress.visibility = View.GONE
+                    noAppsText.visibility = View.VISIBLE
+                    noAppsText.text = getString(R.string.no_apps_found)
+                } else {
+                    Log.d("Languager", "Setting up adapter with ${enabledApps.size} apps")
+                    loadingProgress.visibility = View.GONE
+                    appListRecyclerView.visibility = View.VISIBLE
+                    
+                    // Set up adapter
+                    val adapter = AppLanguageAdapter(
+                        this@ActivityMain,
+                        enabledApps,
+                        languageMappings
+                    ) { packageName, languageCode ->
+                        // This is called when a language is selected for an app
+                        languageMappings[packageName] = languageCode
+                    }
+                    appListRecyclerView.adapter = adapter
+                }
+            } catch (e: Exception) {
+                Log.e("Languager", "Error loading apps", e)
                 loadingProgress.visibility = View.GONE
                 noAppsText.visibility = View.VISIBLE
-            } else {
-                loadingProgress.visibility = View.GONE
-                appListRecyclerView.visibility = View.VISIBLE
-                
-                // Set up adapter
-                val adapter = AppLanguageAdapter(
-                    this@ActivityMain,
-                    enabledApps,
-                    languageMappings
-                ) { packageName, languageCode ->
-                    // This is called when a language is selected for an app
-                    languageMappings[packageName] = languageCode
-                }
-                appListRecyclerView.adapter = adapter
+                noAppsText.text = getString(R.string.error_loading_apps)
             }
         }
     }
@@ -194,13 +207,17 @@ class ActivityMain : AppCompatActivity() {
         val result = mutableListOf<ApplicationInfo>()
 
         try {
-            // Get all installed applications that have a launcher icon (user-visible apps)
+            // Get all installed applications
             val installedApps = packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
+            
+            // Log the number of apps found
+            Log.d("Languager", "Found ${installedApps.size} installed applications")
+            
             for (app in installedApps) {
-                // Only include non-system apps that can be launched
-                if (app.flags and ApplicationInfo.FLAG_SYSTEM == 0 || 
-                    packageManager.getLaunchIntentForPackage(app.packageName) != null) {
+                // Only include non-system apps
+                if (app.flags and ApplicationInfo.FLAG_SYSTEM == 0) {
                     result.add(app)
+                    Log.d("Languager", "Added app: ${app.loadLabel(packageManager)} (${app.packageName})")
                 }
             }
             
@@ -210,34 +227,28 @@ class ActivityMain : AppCompatActivity() {
                 val name2 = app2.loadLabel(packageManager).toString()
                 name1.compareTo(name2, ignoreCase = true)
             }
+            
+            Log.d("Languager", "Final list contains ${result.size} applications")
         } catch (e: Exception) {
-            // Return empty list on error
+            // Log the error
+            Log.e("Languager", "Error getting installed apps", e)
         }
 
         return result
     }
 
     private fun filterApps(query: String?) {
-        if (query.isNullOrEmpty()) {
-            (appListRecyclerView.adapter as? AppLanguageAdapter)?.let { adapter ->
-                // Reset to original list
-                adapter.updateList(enabledApps)
-            }
-            return
-        }
-
-        val filteredList = enabledApps.filter { app ->
-            val appName = app.loadLabel(packageManager).toString().lowercase()
-            val packageName = app.packageName.lowercase()
-            val searchQuery = query.lowercase()
-            
-            appName.contains(searchQuery) || packageName.contains(searchQuery)
-        }
-
         (appListRecyclerView.adapter as? AppLanguageAdapter)?.let { adapter ->
-            adapter.updateList(filteredList)
+            if (query.isNullOrEmpty()) {
+                // Reset to original list
+                adapter.filter("")
+            } else {
+                // Use the adapter's filter method
+                adapter.filter(query)
+            }
             
-            if (filteredList.isEmpty()) {
+            // Update visibility based on whether there are items
+            if (adapter.itemCount == 0) {
                 noAppsText.visibility = View.VISIBLE
                 appListRecyclerView.visibility = View.GONE
             } else {
