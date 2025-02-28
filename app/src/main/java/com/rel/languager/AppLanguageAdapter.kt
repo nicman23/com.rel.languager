@@ -64,6 +64,8 @@ class AppLanguageAdapter(
                 // Show language code in the selected view
                 val languageCode = availableLanguages[position].first
                 textView.text = "$languageCode"
+                textView.textSize = 14f  // Smaller text size
+                textView.setPadding(8, 0, 8, 0)  // Reduce padding
                 return view
             }
 
