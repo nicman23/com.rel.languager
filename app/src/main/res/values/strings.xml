@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="MissingTranslation">
+    <string name="app_name">Languager</string>
+    <string name="module_not_enabled">
+        \n
+        Looks like languager\'s module is not yet enabled.\n
+        Please enable it in LSPosed / EdXposed, then reboot the device.
+    </string>
+    <string name="close">Close</string>
+    <string name="enable_verbose_logs">Enable verbose logs</string>
+    <string name="module_status_active">Module is active and working</string>
+    <string name="module_description">This module forces apps to use English language regardless of system language settings.</string>
+    <string name="module_instructions">Enable this module in LSPosed for specific apps where you want to force English language.</string>
+    
+    <string-array name="module_scope">
+        <item>com.linkedin.android</item>
+        <item>com.instagram.android</item>
+    </string-array>
+</resources>
