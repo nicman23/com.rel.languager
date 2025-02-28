@@ -105,8 +105,18 @@ class ActivityMain : AppCompatActivity() {
             // Set text colors for the SearchView
             val searchText = findViewById<EditText>(androidx.appcompat.R.id.search_src_text)
             searchText?.apply {
-                setTextColor(ContextCompat.getColor(this@ActivityMain, R.color.black))
+                setTextColor(ContextCompat.getColor(this@ActivityMain, android.R.color.white))
                 setHintTextColor(ContextCompat.getColor(this@ActivityMain, R.color.teal_200))
+                // Change cursor color to white
+                try {
+                    // Get the cursor drawable field
+                    val cursorDrawableField = TextView::class.java.getDeclaredField("mCursorDrawableRes")
+                    cursorDrawableField.isAccessible = true
+                    // Set cursor color to white
+                    cursorDrawableField.set(this, R.drawable.white_cursor)
+                } catch (e: Exception) {
+                    // Ignore if we can't change the cursor color
+                }
             }
 
             setOnQueryTextListener(object : SearchView.OnQueryTextListener {

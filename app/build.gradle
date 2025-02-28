@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    compileSdk 31
+    compileSdk 33
 
     defaultConfig {
         applicationId "com.rel.languager"
@@ -30,6 +30,12 @@ android {
     namespace 'com.rel.languager'
     buildFeatures {
         buildConfig true
+    }
+    lint {
+        baseline = file("lint-baseline.xml")
+        abortOnError true
+        checkReleaseBuilds true
+        warningsAsErrors true
     }
 }
 

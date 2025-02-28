@@ -3,7 +3,6 @@ package com.rel.languager
 import android.content.res.Configuration
 import android.content.res.Resources
 import android.os.Build
-import android.os.LocaleList
 import android.util.Log
 import com.rel.languager.Constants.SHARED_PREF_FILE_NAME
 import de.robv.android.xposed.*
@@ -81,13 +80,13 @@ class FeatureSpoofer: IXposedHookLoadPackage {
     ) {
         try {
             // Common hooks for all API levels
-            hookCommonLocaleAPIs(lpparam, locale, languageCode, packageName)
+            hookCommonLocaleAPIs(lpparam, locale)
 
             // API level specific hooks
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                hookApi24PlusLocaleAPIs(lpparam, locale, languageCode, packageName)
+                hookApi24PlusLocaleAPIs(lpparam, locale)
             } else {
-                hookPreApi24LocaleAPIs(lpparam, locale, languageCode, packageName)
+                hookPreApi24LocaleAPIs(lpparam, locale)
             }
 
             log("Successfully hooked all locale APIs for $packageName to use $languageCode")
@@ -99,9 +98,7 @@ class FeatureSpoofer: IXposedHookLoadPackage {
 
     private fun hookCommonLocaleAPIs(
         lpparam: XC_LoadPackage.LoadPackageParam,
-        locale: Locale,
-        languageCode: String,
-        packageName: String
+        locale: Locale
     ) {
         // 1. Hook Locale.getDefault() for all API levels
         try {
@@ -126,7 +123,7 @@ class FeatureSpoofer: IXposedHookLoadPackage {
                 lpparam.classLoader,
                 "updateConfiguration",
                 Configuration::class.java,
-                "android.util.DisplayMetrics",
+                android.util.DisplayMetrics::class.java,
                 object : XC_MethodHook() {
                     override fun beforeHookedMethod(param: MethodHookParam) {
                         val config = param.args[0] as Configuration
@@ -163,11 +160,9 @@ class FeatureSpoofer: IXposedHookLoadPackage {
 
     private fun hookApi24PlusLocaleAPIs(
         lpparam: XC_LoadPackage.LoadPackageParam,
-        locale: Locale,
-        languageCode: String,
-        packageName: String
+        locale: Locale
     ) {
-        // 1. Hook Locale.getDefault(Locale.Category) for API 24+
+        // 1. Hook Locale.getDefault(Category) for API 24+
         try {
             XposedHelpers.findAndHookMethod(
                 Locale::class.java.name,
@@ -177,7 +172,6 @@ class FeatureSpoofer: IXposedHookLoadPackage {
                 object : XC_MethodHook() {
                     override fun afterHookedMethod(param: MethodHookParam) {
                         param.result = locale
-                        log("Spoofed Locale.getDefault(Category) to $languageCode for $packageName")
                     }
                 }
             )
@@ -188,30 +182,104 @@ class FeatureSpoofer: IXposedHookLoadPackage {
         // 2. Hook Resources.getConfiguration().getLocales() for API 24+
         try {
             XposedHelpers.findAndHookMethod(
-                Configuration::class.java.name,
-                lpparam.classLoader,
-                "getLocales",
-                object : XC_MethodHook() {
+                "android.content.res.Configuration", lpparam.classLoader,
+                "getLocales", object : XC_MethodHook() {
                     override fun afterHookedMethod(param: MethodHookParam) {
-                        val localeList = LocaleList(locale)
+                        // Use XposedHelpers to create LocaleList to avoid direct API call
+                        val localeListClass = XposedHelpers.findClass(
+                            "android.os.LocaleList",
+                            lpparam.classLoader
+                        )
+                        // Create a LocaleList using reflection to support all API levels
+                        val localeList = try {
+                            // First try the array constructor which is available on all API levels
+                            XposedHelpers.newInstance(
+                                localeListClass,
+                                arrayOf<Any>(locale)
+                            )
+                        } catch (e: Throwable) {
+                            try {
+                                // If array constructor fails, try the varargs constructor
+                                XposedHelpers.callStaticMethod(
+                                    localeListClass,
+                                    "create",
+                                    locale
+                                )
+                            } catch (e2: Throwable) {
+                                try {
+                                    // Last resort: try to get system default and modify it
+                                    val defaultLocaleList = XposedHelpers.callStaticMethod(
+                                        localeListClass,
+                                        "getDefault"
+                                    )
+                                    // Try to create a new LocaleList with our locale as primary
+                                    XposedHelpers.callStaticMethod(
+                                        localeListClass,
+                                        "forLanguageTags",
+                                        locale.toLanguageTag()
+                                    )
+                                } catch (e3: Throwable) {
+                                    log("Failed to create LocaleList: ${e3.message}")
+                                    null
+                                }
+                            }
+                        }
                         param.result = localeList
                     }
                 }
             )
         } catch (e: Throwable) {
+            log("Error hooking Configuration.getLocales(): ${e.message}")
         }
 
         // 3. Hook Configuration.setLocales for API 24+
         try {
             XposedHelpers.findAndHookMethod(
-                Configuration::class.java.name,
-                lpparam.classLoader,
+                "android.content.res.Configuration", lpparam.classLoader,
                 "setLocales",
-                LocaleList::class.java,
+                "android.os.LocaleList",
                 object : XC_MethodHook() {
                     override fun beforeHookedMethod(param: MethodHookParam) {
-                        param.args[0] = LocaleList(locale)
-                        log("Spoofed Configuration.setLocales to $languageCode for $packageName")
+                        // Use XposedHelpers to create LocaleList to avoid direct API call
+                        val localeListClass = XposedHelpers.findClass(
+                            "android.os.LocaleList",
+                            lpparam.classLoader
+                        )
+                        // Create a LocaleList using reflection to support all API levels
+                        val localeList = try {
+                            // First try the array constructor which is available on all API levels
+                            XposedHelpers.newInstance(
+                                localeListClass,
+                                arrayOf<Any>(locale)
+                            )
+                        } catch (e: Throwable) {
+                            try {
+                                // If array constructor fails, try the varargs constructor
+                                XposedHelpers.callStaticMethod(
+                                    localeListClass,
+                                    "create",
+                                    locale
+                                )
+                            } catch (e2: Throwable) {
+                                try {
+                                    // Last resort: try to get system default and modify it
+                                    val defaultLocaleList = XposedHelpers.callStaticMethod(
+                                        localeListClass,
+                                        "getDefault"
+                                    )
+                                    // Try to create a new LocaleList with our locale as primary
+                                    XposedHelpers.callStaticMethod(
+                                        localeListClass,
+                                        "forLanguageTags",
+                                        locale.toLanguageTag()
+                                    )
+                                } catch (e3: Throwable) {
+                                    log("Failed to create LocaleList: ${e3.message}")
+                                    null
+                                }
+                            }
+                        }
+                        param.args[0] = localeList
                     }
                 }
             )
@@ -222,9 +290,7 @@ class FeatureSpoofer: IXposedHookLoadPackage {
 
     private fun hookPreApi24LocaleAPIs(
         lpparam: XC_LoadPackage.LoadPackageParam,
-        locale: Locale,
-        languageCode: String,
-        packageName: String
+        locale: Locale
     ) {
         // For pre-API 24, most hooks are covered by the common methods
         // But we can add additional hooks specific to older APIs if needed

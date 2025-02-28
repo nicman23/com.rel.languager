@@ -69,11 +69,11 @@ class AppLanguageAdapter(
                 return view
             }
 
-            override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View {
-                val view = super.getDropDownView(position, convertView, parent)
+            override fun getDropDownView(dropDownPosition: Int, convertView: View?, parent: ViewGroup): View {
+                val view = super.getDropDownView(dropDownPosition, convertView, parent)
                 val textView = view.findViewById<TextView>(android.R.id.text1)
                 // Show full language name in dropdown
-                textView.text = availableLanguages[position].second
+                textView.text = availableLanguages[dropDownPosition].second
                 return view
             }
         }.apply {
