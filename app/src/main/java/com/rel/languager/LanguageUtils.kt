@@ -80,34 +80,66 @@ object LanguageUtils {
      * @return The corresponding Locale object
      */
     fun getLocaleForLanguage(languageCode: String): Locale {
+        // Check if the language code includes a country code (e.g., "en-US")
+        if (languageCode.contains("-")) {
+            val parts = languageCode.split("-")
+            if (parts.size >= 2) {
+                val language = parts[0]
+                val country = parts[1]
+                return Locale(language, country)
+            }
+        }
+        
+        // Handle standard language codes
         return when (languageCode) {
-            "en" -> Locale.ENGLISH
-            "fr" -> Locale.FRENCH
-            "de" -> Locale.GERMAN
-            "it" -> Locale.ITALIAN
-            "ja" -> Locale.JAPANESE
-            "ko" -> Locale.KOREAN
-            "zh" -> Locale.CHINESE
-            "es" -> Locale("es")
-            "pt" -> Locale("pt")
-            "ru" -> Locale("ru")
-            "ar" -> Locale("ar")
-            "hi" -> Locale("hi")
-            "tr" -> Locale("tr")
-            "nl" -> Locale("nl")
-            "pl" -> Locale("pl")
-            "th" -> Locale("th")
-            "cs" -> Locale("cs")
-            "sv" -> Locale("sv")
-            "da" -> Locale("da")
-            "fi" -> Locale("fi")
-            "no" -> Locale("no")
-            "el" -> Locale("el")
-            "he" -> Locale("he")
-            "id" -> Locale("id")
-            "ms" -> Locale("ms")
-            "vi" -> Locale("vi")
-            else -> Locale.ENGLISH // Default to English for unknown codes
+            "en" -> Locale.US // Use US English as default
+            "en_US" -> Locale.US
+            "en_GB" -> Locale.UK
+            "fr" -> Locale.FRANCE
+            "fr_FR" -> Locale.FRANCE
+            "fr_CA" -> Locale("fr", "CA")
+            "de" -> Locale.GERMANY
+            "de_DE" -> Locale.GERMANY
+            "it" -> Locale.ITALY
+            "it_IT" -> Locale.ITALY
+            "ja" -> Locale.JAPAN
+            "ja_JP" -> Locale.JAPAN
+            "ko" -> Locale.KOREA
+            "ko_KR" -> Locale.KOREA
+            "zh" -> Locale.SIMPLIFIED_CHINESE
+            "zh_CN" -> Locale.SIMPLIFIED_CHINESE
+            "zh_TW" -> Locale.TRADITIONAL_CHINESE
+            "es" -> Locale("es", "ES")
+            "es_ES" -> Locale("es", "ES")
+            "es_MX" -> Locale("es", "MX")
+            "pt" -> Locale("pt", "PT")
+            "pt_BR" -> Locale("pt", "BR")
+            "pt_PT" -> Locale("pt", "PT")
+            "ru" -> Locale("ru", "RU")
+            "ar" -> Locale("ar", "SA") // Saudi Arabia as default
+            "hi" -> Locale("hi", "IN")
+            "tr" -> Locale("tr", "TR")
+            "nl" -> Locale("nl", "NL")
+            "pl" -> Locale("pl", "PL")
+            "th" -> Locale("th", "TH")
+            "cs" -> Locale("cs", "CZ")
+            "sv" -> Locale("sv", "SE")
+            "da" -> Locale("da", "DK")
+            "fi" -> Locale("fi", "FI")
+            "no" -> Locale("no", "NO")
+            "el" -> Locale("el", "GR")
+            "he" -> Locale("he", "IL")
+            "id" -> Locale("id", "ID")
+            "ms" -> Locale("ms", "MY")
+            "vi" -> Locale("vi", "VN")
+            else -> {
+                // For any other language code, try to create a Locale directly
+                try {
+                    Locale(languageCode)
+                } catch (e: Exception) {
+                    Locale.US // Default to US English if invalid code
+                }
+            }
         }
     }
 
