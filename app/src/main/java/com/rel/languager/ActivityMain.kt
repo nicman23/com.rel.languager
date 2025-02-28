@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
+import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.Switch
 import android.widget.TextView
@@ -13,6 +14,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
@@ -108,6 +110,13 @@ class ActivityMain : AppCompatActivity() {
             isFocusable = true
             isIconified = false
             clearFocus() // Clear initial focus to prevent keyboard from showing automatically
+            
+            // Set text colors for the SearchView
+            val searchText = findViewById<EditText>(androidx.appcompat.R.id.search_src_text)
+            searchText?.apply {
+                setTextColor(ContextCompat.getColor(this@ActivityMain, android.R.color.white))
+                setHintTextColor(ContextCompat.getColor(this@ActivityMain, android.R.color.darker_gray))
+            }
             
             setOnQueryTextListener(object : SearchView.OnQueryTextListener {
                 override fun onQueryTextSubmit(query: String?): Boolean {

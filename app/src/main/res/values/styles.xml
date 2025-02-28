@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- SearchView style for black background with white text -->
+    <style name="SearchViewStyle" parent="Widget.AppCompat.SearchView">
+        <!-- Text color -->
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textColorHint">#CCCCCC</item>
+        
+        <!-- Search icon color -->
+        <item name="android:tint">#FFFFFF</item>
+        <item name="colorControlNormal">#FFFFFF</item>
+        <item name="colorControlActivated">#FFFFFF</item>
+        
+        <!-- Close button color -->
+        <item name="android:colorControlNormal">#FFFFFF</item>
+    </style>
+</resources>
