@@ -103,16 +103,24 @@ class ActivityMain : AppCompatActivity() {
         }
 
         // Set up search functionality
-        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                return false
-            }
+        searchView.apply {
+            isSubmitButtonEnabled = false
+            isFocusable = true
+            isIconified = false
+            clearFocus() // Clear initial focus to prevent keyboard from showing automatically
+            
+            setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                override fun onQueryTextSubmit(query: String?): Boolean {
+                    filterApps(query)
+                    return true
+                }
 
-            override fun onQueryTextChange(newText: String?): Boolean {
-                filterApps(newText)
-                return true
-            }
-        })
+                override fun onQueryTextChange(newText: String?): Boolean {
+                    filterApps(newText)
+                    return true
+                }
+            })
+        }
 
         // Set up save button
         saveButton.setOnClickListener {
