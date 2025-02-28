@@ -7,8 +7,6 @@
     <string name="module_status_active">Module Status: Active</string>
     <string name="module_status_inactive">Module Status: Inactive</string>
     <string name="module_description">This module allows you to force any app to use a specific language, regardless of your system language settings.</string>
-    <string name="verbose_logs">Verbose Logs</string>
-    <string name="enable_verbose_logs">Enable Verbose Logs</string>
     <string name="module_instructions">Configure language settings for any installed app below. Changes will take effect after you save and restart the target app.</string>
     <string name="language_settings">Language Settings</string>
     <string name="search_apps">Search apps…</string>

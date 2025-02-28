@@ -17,11 +17,11 @@ class AppLanguageAdapter(
     private val context: Context,
     private var appList: List<ApplicationInfo>,
     private val languageMappings: MutableMap<String, String>,
+    private val availableLanguages: List<Pair<String, String>>,
     private val onLanguageSelected: (String, String) -> Unit
 ) : RecyclerView.Adapter<AppLanguageAdapter.AppViewHolder>() {
 
     private val packageManager: PackageManager = context.packageManager
-    private val availableLanguages = LanguageUtils.getAvailableLanguages()
     private var fullAppList: List<ApplicationInfo> = appList.toList()
 
     class AppViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -99,13 +99,12 @@ class AppLanguageAdapter(
     override fun getItemCount() = appList.size
 
     // Method to update the list for filtering
-    fun updateList(newList: List<ApplicationInfo>) {
+    fun updateFilteredList(newList: List<ApplicationInfo>) {
         appList = newList
-        fullAppList = newList.toList()
         notifyDataSetChanged()
     }
 
-    // Method to filter the list based on user input
+    // Method to filter the list based on user input (kept for backward compatibility)
     fun filter(query: String) {
         val filteredList = if (query.isEmpty()) {
             fullAppList

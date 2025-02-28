@@ -2,13 +2,12 @@ package com.rel.languager
 
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.Button
 import android.widget.EditText
 import android.widget.ProgressBar
-import android.widget.Switch
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -17,9 +16,9 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.snackbar.Snackbar
 import com.rel.languager.Constants.PREF_APP_LANGUAGE_MAP
-import com.rel.languager.Constants.PREF_ENABLE_VERBOSE_LOGS
 import com.rel.languager.Constants.SHARED_PREF_FILE_NAME
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -48,8 +47,7 @@ class ActivityMain : AppCompatActivity() {
     private lateinit var searchView: SearchView
     private lateinit var loadingProgress: ProgressBar
     private lateinit var noAppsText: TextView
-    private lateinit var saveButton: Button
-    private lateinit var verboseLogsSwitch: Switch
+    private lateinit var saveButton: MaterialButton
     private lateinit var statusText: TextView
 
     private val enabledApps = mutableListOf<ApplicationInfo>()
@@ -83,7 +81,6 @@ class ActivityMain : AppCompatActivity() {
 
     private fun initializeViews() {
         statusText = findViewById(R.id.status_text)
-        verboseLogsSwitch = findViewById(R.id.verbose_logs_switch)
         appListRecyclerView = findViewById(R.id.app_list)
         searchView = findViewById(R.id.search_view)
         loadingProgress = findViewById(R.id.loading_progress)
@@ -95,29 +92,23 @@ class ActivityMain : AppCompatActivity() {
 
         // Set initial values
         statusText.text = getString(R.string.module_status_active)
-        verboseLogsSwitch.isChecked = pref?.getBoolean(PREF_ENABLE_VERBOSE_LOGS, false) ?: false
     }
 
     private fun setupListeners() {
-        // Set listeners for verbose logs switch
-        verboseLogsSwitch.setOnCheckedChangeListener { _, isChecked ->
-            pref?.edit()?.putBoolean(PREF_ENABLE_VERBOSE_LOGS, isChecked)?.apply()
-        }
-
         // Set up search functionality
         searchView.apply {
             isSubmitButtonEnabled = false
             isFocusable = true
             isIconified = false
             clearFocus() // Clear initial focus to prevent keyboard from showing automatically
-            
+
             // Set text colors for the SearchView
             val searchText = findViewById<EditText>(androidx.appcompat.R.id.search_src_text)
             searchText?.apply {
-                setTextColor(ContextCompat.getColor(this@ActivityMain, android.R.color.white))
-                setHintTextColor(ContextCompat.getColor(this@ActivityMain, android.R.color.darker_gray))
+                setTextColor(ContextCompat.getColor(this@ActivityMain, R.color.black))
+                setHintTextColor(ContextCompat.getColor(this@ActivityMain, R.color.teal_200))
             }
-            
+
             setOnQueryTextListener(object : SearchView.OnQueryTextListener {
                 override fun onQueryTextSubmit(query: String?): Boolean {
                     filterApps(query)
@@ -158,7 +149,7 @@ class ActivityMain : AppCompatActivity() {
                 jsonObject.put(packageName, languageCode)
             }
             pref?.edit()?.putString(PREF_APP_LANGUAGE_MAP, jsonObject.toString())?.apply()
-            
+
             Snackbar.make(
                 findViewById(R.id.root_view_for_snackbar),
                 R.string.settings_saved,
@@ -174,7 +165,6 @@ class ActivityMain : AppCompatActivity() {
     }
 
     private fun loadEnabledApps() {
-        Log.d("Languager", "Starting to load enabled apps")
         loadingProgress.visibility = View.VISIBLE
         appListRecyclerView.visibility = View.GONE
         noAppsText.visibility = View.GONE
@@ -185,33 +175,30 @@ class ActivityMain : AppCompatActivity() {
                     getEnabledApps()
                 }
 
-                Log.d("Languager", "Received ${enabledAppsList.size} apps from getEnabledApps")
                 enabledApps.clear()
                 enabledApps.addAll(enabledAppsList)
 
                 if (enabledApps.isEmpty()) {
-                    Log.w("Languager", "No apps found to display")
                     loadingProgress.visibility = View.GONE
                     noAppsText.visibility = View.VISIBLE
                     noAppsText.text = getString(R.string.no_apps_found)
                 } else {
-                    Log.d("Languager", "Setting up adapter with ${enabledApps.size} apps")
-                    loadingProgress.visibility = View.GONE
-                    appListRecyclerView.visibility = View.VISIBLE
-                    
-                    // Set up adapter
+                    // Create and set the adapter
                     val adapter = AppLanguageAdapter(
                         this@ActivityMain,
                         enabledApps,
-                        languageMappings
+                        languageMappings,
+                        LanguageUtils.getAvailableLanguages()
                     ) { packageName, languageCode ->
-                        // This is called when a language is selected for an app
+                        // Update language mapping when spinner selection changes
                         languageMappings[packageName] = languageCode
                     }
+
                     appListRecyclerView.adapter = adapter
+                    loadingProgress.visibility = View.GONE
+                    appListRecyclerView.visibility = View.VISIBLE
                 }
             } catch (e: Exception) {
-                Log.e("Languager", "Error loading apps", e)
                 loadingProgress.visibility = View.GONE
                 noAppsText.visibility = View.VISIBLE
                 noAppsText.text = getString(R.string.error_loading_apps)
@@ -219,59 +206,34 @@ class ActivityMain : AppCompatActivity() {
         }
     }
 
-    private fun getEnabledApps(): List<ApplicationInfo> {
-        val packageManager = packageManager
-        val result = mutableListOf<ApplicationInfo>()
+    private suspend fun getEnabledApps(): List<ApplicationInfo> = withContext(Dispatchers.IO) {
+        val pm = packageManager
+        @Suppress("DEPRECATION")
+        val installedApps = pm.getInstalledApplications(0)
 
-        try {
-            // Get all installed applications
-            val installedApps = packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
-            
-            // Log the number of apps found
-            Log.d("Languager", "Found ${installedApps.size} installed applications")
-            
-            for (app in installedApps) {
-                // Only include non-system apps
-                if (app.flags and ApplicationInfo.FLAG_SYSTEM == 0) {
-                    result.add(app)
-                    Log.d("Languager", "Added app: ${app.loadLabel(packageManager)} (${app.packageName})")
-                }
-            }
-            
-            // Sort apps by name
-            result.sortWith { app1, app2 ->
-                val name1 = app1.loadLabel(packageManager).toString()
-                val name2 = app2.loadLabel(packageManager).toString()
-                name1.compareTo(name2, ignoreCase = true)
-            }
-            
-            Log.d("Languager", "Final list contains ${result.size} applications")
-        } catch (e: Exception) {
-            // Log the error
-            Log.e("Languager", "Error getting installed apps", e)
+        return@withContext installedApps.filter { app ->
+            app.enabled && !app.packageName.equals(packageName)
+        }.sortedBy {
+            pm.getApplicationLabel(it).toString().lowercase()
         }
-
-        return result
     }
 
     private fun filterApps(query: String?) {
-        (appListRecyclerView.adapter as? AppLanguageAdapter)?.let { adapter ->
-            if (query.isNullOrEmpty()) {
-                // Reset to original list
-                adapter.filter("")
-            } else {
-                // Use the adapter's filter method
-                adapter.filter(query)
-            }
-            
-            // Update visibility based on whether there are items
-            if (adapter.itemCount == 0) {
-                noAppsText.visibility = View.VISIBLE
-                appListRecyclerView.visibility = View.GONE
-            } else {
-                noAppsText.visibility = View.GONE
-                appListRecyclerView.visibility = View.VISIBLE
-            }
+        val adapter = appListRecyclerView.adapter as? AppLanguageAdapter ?: return
+
+        if (query.isNullOrBlank()) {
+            adapter.updateFilteredList(enabledApps)
+            return
         }
+
+        val filteredApps = enabledApps.filter { appInfo ->
+            val appName = packageManager.getApplicationLabel(appInfo).toString().lowercase()
+            val packageName = appInfo.packageName.lowercase()
+            val searchQuery = query.lowercase()
+
+            appName.contains(searchQuery) || packageName.contains(searchQuery)
+        }
+
+        adapter.updateFilteredList(filteredApps)
     }
 }

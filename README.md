@@ -7,7 +7,6 @@ Languager is an Xposed module that allows you to change the language of specific
 - **Per-App Language Selection**: Choose a different language for each app
 - **Comprehensive Language Support**: 26+ languages available
 - **User-Friendly Interface**: Easy-to-use UI with app search functionality
-- **Verbose Logging**: Optional detailed logging for debugging purposes
 - **Compatibility**: Works on Android 5.0+ (API 21+)
 
 ## Technical Details
@@ -25,7 +24,6 @@ Languager is an Xposed module that allows you to change the language of specific
 - **Shared Preferences**:
   - Stores configuration using XSharedPreferences
   - JSON-based storage for app-language mappings
-  - Supports verbose logging toggle
 
 ## Requirements
 - Android device with Xposed framework installed (LSPosed, EdXposed, etc.)
@@ -141,9 +139,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
-
-## License
-This project is open source and available under the [MIT License](LICENSE).
 
 ## Acknowledgements
 - [Xposed Framework](https://github.com/rovo89/XposedBridge)
