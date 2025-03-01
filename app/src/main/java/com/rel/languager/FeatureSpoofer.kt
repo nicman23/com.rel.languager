@@ -116,7 +116,24 @@ class FeatureSpoofer: IXposedHookLoadPackage {
             log("Error hooking Locale.getDefault(): ${e.message}")
         }
 
-        // 2. Hook Resources.updateConfiguration for all API levels
+        // 2. Hook Resources.getConfiguration().locale
+        try {
+            XposedHelpers.findAndHookMethod(
+                Resources::class.java.name,
+                lpparam.classLoader,
+                "getConfiguration",
+                object : XC_MethodHook() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        val config = param.result as Configuration
+                        XposedHelpers.setObjectField(config, "locale", locale)
+                    }
+                }
+            )
+        } catch (e: Throwable) {
+            log("Error hooking Resources.getConfiguration(): ${e.message}")
+        }
+
+        // 3. Hook Resources.updateConfiguration for all API levels
         try {
             XposedHelpers.findAndHookMethod(
                 Resources::class.java.name,
@@ -138,7 +155,7 @@ class FeatureSpoofer: IXposedHookLoadPackage {
             log("Error hooking Resources.updateConfiguration: ${e.message}")
         }
 
-        // 3. Hook Configuration.setLocale for API 17+
+        // 4. Hook Configuration.setLocale for API 17+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             try {
                 XposedHelpers.findAndHookMethod(
@@ -155,6 +172,39 @@ class FeatureSpoofer: IXposedHookLoadPackage {
             } catch (e: Throwable) {
                 log("Error hooking Configuration.setLocale: ${e.message}")
             }
+        }
+
+        // 5. Hook Resources.getSystem()
+        try {
+            XposedHelpers.findAndHookMethod(
+                Resources::class.java.name,
+                lpparam.classLoader,
+                "getSystem",
+                object : XC_MethodHook() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        val resources = param.result as Resources
+                        val config = resources.configuration
+                        XposedHelpers.setObjectField(config, "locale", locale)
+                    }
+                }
+            )
+        } catch (e: Throwable) {
+            log("Error hooking Resources.getSystem(): ${e.message}")
+        }
+
+        // 6. Hook Configuration constructor
+        try {
+            XposedHelpers.findAndHookConstructor(
+                Configuration::class.java.name,
+                lpparam.classLoader,
+                object : XC_MethodHook() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        XposedHelpers.setObjectField(param.thisObject, "locale", locale)
+                    }
+                }
+            )
+        } catch (e: Throwable) {
+            log("Error hooking Configuration constructor: ${e.message}")
         }
     }
 
@@ -285,6 +335,92 @@ class FeatureSpoofer: IXposedHookLoadPackage {
             )
         } catch (e: Throwable) {
             log("Error hooking Configuration.setLocales: ${e.message}")
+        }
+
+        // 4. Hook LocaleList.getDefault() for API 24+
+        try {
+            XposedHelpers.findAndHookMethod(
+                "android.os.LocaleList", lpparam.classLoader,
+                "getDefault", object : XC_MethodHook() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        val localeListClass = XposedHelpers.findClass(
+                            "android.os.LocaleList",
+                            lpparam.classLoader
+                        )
+                        val localeList = try {
+                            XposedHelpers.newInstance(
+                                localeListClass,
+                                arrayOf<Any>(locale)
+                            )
+                        } catch (e: Throwable) {
+                            try {
+                                XposedHelpers.callStaticMethod(
+                                    localeListClass,
+                                    "create",
+                                    locale
+                                )
+                            } catch (e2: Throwable) {
+                                try {
+                                    XposedHelpers.callStaticMethod(
+                                        localeListClass,
+                                        "forLanguageTags",
+                                        locale.toLanguageTag()
+                                    )
+                                } catch (e3: Throwable) {
+                                    log("Failed to create LocaleList: ${e3.message}")
+                                    null
+                                }
+                            }
+                        }
+                        param.result = localeList
+                    }
+                }
+            )
+        } catch (e: Throwable) {
+            log("Error hooking LocaleList.getDefault(): ${e.message}")
+        }
+
+        // 5. Hook LocaleList.getAdjustedDefault() for API 24+
+        try {
+            XposedHelpers.findAndHookMethod(
+                "android.os.LocaleList", lpparam.classLoader,
+                "getAdjustedDefault", object : XC_MethodHook() {
+                    override fun afterHookedMethod(param: MethodHookParam) {
+                        val localeListClass = XposedHelpers.findClass(
+                            "android.os.LocaleList",
+                            lpparam.classLoader
+                        )
+                        val localeList = try {
+                            XposedHelpers.newInstance(
+                                localeListClass,
+                                arrayOf<Any>(locale)
+                            )
+                        } catch (e: Throwable) {
+                            try {
+                                XposedHelpers.callStaticMethod(
+                                    localeListClass,
+                                    "create",
+                                    locale
+                                )
+                            } catch (e2: Throwable) {
+                                try {
+                                    XposedHelpers.callStaticMethod(
+                                        localeListClass,
+                                        "forLanguageTags",
+                                        locale.toLanguageTag()
+                                    )
+                                } catch (e3: Throwable) {
+                                    log("Failed to create LocaleList: ${e3.message}")
+                                    null
+                                }
+                            }
+                        }
+                        param.result = localeList
+                    }
+                }
+            )
+        } catch (e: Throwable) {
+            log("Error hooking LocaleList.getAdjustedDefault(): ${e.message}")
         }
     }
 
