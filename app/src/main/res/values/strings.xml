@@ -4,37 +4,17 @@
     <string name="app_name">Languager</string>
     <string name="module_not_enabled">Module is not enabled. Please enable it in LSPosed/EdXposed Manager.</string>
     <string name="close">Close</string>
-    <string name="module_status_active">Module Status: Active</string>
-    <string name="module_status_inactive">Module Status: Inactive</string>
-    <string name="module_description">This module allows you to force any app to use a specific language, regardless of your system language settings.</string>
-    <string name="module_instructions">Configure language settings for any installed app below. Changes will take effect after you save and restart the target app.</string>
-    <string name="language_settings">Language Settings</string>
     <string name="search_apps">Search apps…</string>
-    <string name="search_hint">Search apps…</string>
-    <string name="enabled_apps">Installed Applications</string>
     <string name="no_apps_found">No apps found. Try a different search query.</string>
     <string name="save_settings">Save Settings</string>
     <string name="settings_saved">Settings saved successfully</string>
     <string name="error_saving_settings">Error saving settings</string>
     <string name="error_loading_apps">Error loading applications. Please try again.</string>
-    <string name="select_language">Select language</string>
     <string name="app_icon">App icon</string>
+    <string name="select_language">Select language</string>
     <string name="default_language">Default (System)</string>
     <string-array name="module_scope">
         <item>com.linkedin.android</item>
         <item>com.instagram.android</item>
-        <item>com.facebook.katana</item>
-        <item>com.twitter.android</item>
-        <item>com.whatsapp</item>
-        <item>com.snapchat.android</item>
-        <item>com.spotify.music</item>
-        <item>com.google.android.youtube</item>
-        <item>com.google.android.gm</item>
-        <item>com.amazon.mShop.android.shopping</item>
-        <item>com.netflix.mediaclient</item>
-        <item>com.google.android.apps.maps</item>
-        <item>com.ubercab</item>
-        <item>com.pinterest</item>
-        <item>com.reddit.frontpage</item>
     </string-array>
 </resources>
