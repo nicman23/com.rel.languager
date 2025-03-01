@@ -48,8 +48,6 @@ class ActivityMain : AppCompatActivity() {
     private lateinit var loadingProgress: ProgressBar
     private lateinit var noAppsText: TextView
     private lateinit var saveButton: MaterialButton
-    private lateinit var statusText: TextView
-
     private val enabledApps = mutableListOf<ApplicationInfo>()
     private val languageMappings = mutableMapOf<String, String>()
     private val mainScope = CoroutineScope(Dispatchers.Main)
@@ -80,7 +78,6 @@ class ActivityMain : AppCompatActivity() {
     }
 
     private fun initializeViews() {
-        statusText = findViewById(R.id.status_text)
         appListRecyclerView = findViewById(R.id.app_list)
         searchView = findViewById(R.id.search_view)
         loadingProgress = findViewById(R.id.loading_progress)
@@ -89,9 +86,6 @@ class ActivityMain : AppCompatActivity() {
 
         // Set up RecyclerView
         appListRecyclerView.layoutManager = LinearLayoutManager(this)
-
-        // Set initial values
-        statusText.text = getString(R.string.module_status_active)
     }
 
     private fun setupListeners() {
@@ -232,7 +226,7 @@ class ActivityMain : AppCompatActivity() {
         val adapter = appListRecyclerView.adapter as? AppLanguageAdapter ?: return
 
         if (query.isNullOrBlank()) {
-            adapter.updateFilteredList(enabledApps)
+            adapter.updateList(enabledApps)
             return
         }
 
@@ -244,6 +238,6 @@ class ActivityMain : AppCompatActivity() {
             appName.contains(searchQuery) || packageName.contains(searchQuery)
         }
 
-        adapter.updateFilteredList(filteredApps)
+        adapter.updateList(filteredApps)
     }
 }
