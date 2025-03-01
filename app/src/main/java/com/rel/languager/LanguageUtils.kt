@@ -1,7 +1,6 @@
 package com.rel.languager
 
 import android.content.SharedPreferences
-import com.rel.languager.Constants.DEFAULT_LANGUAGE
 import com.rel.languager.Constants.PREF_APP_LANGUAGE_MAP
 import org.json.JSONObject
 import java.util.Locale
@@ -13,71 +12,84 @@ object LanguageUtils {
 
     /**
      * Get the language code for a specific package
-     * @param packageName The package name of the app
-     * @param prefs The shared preferences
-     * @return The language code (e.g., "en", "fr", "es")
      */
     fun getLanguageForPackage(packageName: String, prefs: SharedPreferences): String {
         val languageMapJson = prefs.getString(PREF_APP_LANGUAGE_MAP, "{}")
         return try {
-            val languageMap = JSONObject(languageMapJson ?: "{}")
-            if (languageMap.has(packageName)) {
-                languageMap.getString(packageName)
-            } else {
-                DEFAULT_LANGUAGE
-            }
+            val jsonObject = JSONObject(languageMapJson)
+            jsonObject.optString(packageName, "")
         } catch (e: Exception) {
-            DEFAULT_LANGUAGE
+            ""
         }
     }
 
     /**
      * Set the language for a specific package
-     * @param packageName The package name of the app
-     * @param languageCode The language code to set (e.g., "en", "fr", "es")
-     * @param prefs The shared preferences
      */
     fun setLanguageForPackage(packageName: String, languageCode: String, prefs: SharedPreferences) {
         val languageMapJson = prefs.getString(PREF_APP_LANGUAGE_MAP, "{}")
         try {
-            val languageMap = JSONObject(languageMapJson ?: "{}")
-            languageMap.put(packageName, languageCode)
-            prefs.edit().putString(PREF_APP_LANGUAGE_MAP, languageMap.toString()).apply()
+            val jsonObject = JSONObject(languageMapJson)
+            jsonObject.put(packageName, languageCode)
+            prefs.edit().putString(PREF_APP_LANGUAGE_MAP, jsonObject.toString()).apply()
         } catch (e: Exception) {
-            // Fallback to a new map if there's an error
-            val newMap = JSONObject()
-            newMap.put(packageName, languageCode)
-            prefs.edit().putString(PREF_APP_LANGUAGE_MAP, newMap.toString()).apply()
+            e.printStackTrace()
         }
     }
 
     /**
      * Get all app-language mappings
-     * @param prefs The shared preferences
-     * @return A map of package names to language codes
      */
     fun getAllLanguageMappings(prefs: SharedPreferences): Map<String, String> {
         val languageMapJson = prefs.getString(PREF_APP_LANGUAGE_MAP, "{}")
-        val result = mutableMapOf<String, String>()
-        
-        try {
-            val languageMap = JSONObject(languageMapJson ?: "{}")
-            val keys = languageMap.keys()
-            while (keys.hasNext()) {
-                val key = keys.next()
-                result[key] = languageMap.getString(key)
+        return try {
+            val jsonObject = JSONObject(languageMapJson)
+            val map = mutableMapOf<String, String>()
+            jsonObject.keys().forEach { key ->
+                map[key] = jsonObject.getString(key)
             }
+            map
         } catch (e: Exception) {
-            // Return empty map on error
+            emptyMap()
         }
-        
-        return result
+    }
+    
+    /**
+     * Get a list of available languages with their codes and display names
+     */
+    fun getAvailableLanguages(): List<Pair<String, String>> {
+        return listOf(
+            "en" to "English",
+            "fr" to "French (Français)",
+            "de" to "German (Deutsch)",
+            "it" to "Italian (Italiano)",
+            "ja" to "Japanese (日本語)",
+            "ko" to "Korean (한국어)",
+            "zh" to "Chinese (中文)",
+            "es" to "Spanish (Español)",
+            "pt" to "Portuguese (Português)",
+            "ru" to "Russian (Русский)",
+            "ar" to "Arabic (العربية)",
+            "hi" to "Hindi (हिन्दी)",
+            "tr" to "Turkish (Türkçe)",
+            "nl" to "Dutch (Nederlands)",
+            "pl" to "Polish (Polski)",
+            "th" to "Thai (ไทย)",
+            "cs" to "Czech (Čeština)",
+            "sv" to "Swedish (Svenska)",
+            "da" to "Danish (Dansk)",
+            "fi" to "Finnish (Suomi)",
+            "no" to "Norwegian (Norsk)",
+            "el" to "Greek (Ελληνικά)",
+            "he" to "Hebrew (עברית)",
+            "id" to "Indonesian (Bahasa Indonesia)",
+            "ms" to "Malay (Bahasa Melayu)",
+            "vi" to "Vietnamese (Tiếng Việt)"
+        )
     }
 
     /**
      * Get a locale for the specified language code
-     * @param languageCode The language code (e.g., "en", "fr", "es")
-     * @return The corresponding Locale object
      */
     fun getLocaleForLanguage(languageCode: String): Locale {
         // Check if the language code includes a country code (e.g., "en-US")
@@ -141,40 +153,5 @@ object LanguageUtils {
                 }
             }
         }
-    }
-
-    /**
-     * Get a list of available languages with their codes and display names
-     * @return A list of Pair<String, String> where first is the language code and second is the display name
-     */
-    fun getAvailableLanguages(): List<Pair<String, String>> {
-        return listOf(
-            "en" to "English",
-            "fr" to "French (Français)",
-            "de" to "German (Deutsch)",
-            "it" to "Italian (Italiano)",
-            "ja" to "Japanese (日本語)",
-            "ko" to "Korean (한국어)",
-            "zh" to "Chinese (中文)",
-            "es" to "Spanish (Español)",
-            "pt" to "Portuguese (Português)",
-            "ru" to "Russian (Русский)",
-            "ar" to "Arabic (العربية)",
-            "hi" to "Hindi (हिन्दी)",
-            "tr" to "Turkish (Türkçe)",
-            "nl" to "Dutch (Nederlands)",
-            "pl" to "Polish (Polski)",
-            "th" to "Thai (ไทย)",
-            "cs" to "Czech (Čeština)",
-            "sv" to "Swedish (Svenska)",
-            "da" to "Danish (Dansk)",
-            "fi" to "Finnish (Suomi)",
-            "no" to "Norwegian (Norsk)",
-            "el" to "Greek (Ελληνικά)",
-            "he" to "Hebrew (עברית)",
-            "id" to "Indonesian (Bahasa Indonesia)",
-            "ms" to "Malay (Bahasa Melayu)",
-            "vi" to "Vietnamese (Tiếng Việt)"
-        )
     }
 }

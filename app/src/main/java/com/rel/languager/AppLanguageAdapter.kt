@@ -3,7 +3,6 @@ package com.rel.languager
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,107 +16,81 @@ class AppLanguageAdapter(
     private val context: Context,
     private var appList: List<ApplicationInfo>,
     private val languageMappings: MutableMap<String, String>,
-    private val availableLanguages: List<Pair<String, String>>,
+    private val availableLanguages: List<Pair<String, String>> = LanguageUtils.getAvailableLanguages(),
     private val onLanguageSelected: (String, String) -> Unit
-) : RecyclerView.Adapter<AppLanguageAdapter.AppViewHolder>() {
+) : RecyclerView.Adapter<AppLanguageAdapter.ViewHolder>() {
 
-    private val packageManager: PackageManager = context.packageManager
-    private var fullAppList: List<ApplicationInfo> = appList.toList()
-
-    class AppViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val appIcon: ImageView = view.findViewById(R.id.app_icon)
         val appName: TextView = view.findViewById(R.id.app_name)
         val packageName: TextView = view.findViewById(R.id.package_name)
         val languageSpinner: Spinner = view.findViewById(R.id.language_spinner)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AppViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_app_language, parent, false)
-        return AppViewHolder(view)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val view = LayoutInflater.from(context).inflate(R.layout.item_app_language, parent, false)
+        return ViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: AppViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val app = appList[position]
-        val packageName = app.packageName
+        val packageManager = context.packageManager
 
         // Set app icon and name
         holder.appIcon.setImageDrawable(app.loadIcon(packageManager))
-        holder.appName.text = app.loadLabel(packageManager).toString()
-        holder.packageName.text = packageName
-        
-        // Ensure text doesn't overflow
-        holder.appName.ellipsize = android.text.TextUtils.TruncateAt.END
-        holder.appName.maxLines = 1
-        holder.packageName.ellipsize = android.text.TextUtils.TruncateAt.END
-        holder.packageName.maxLines = 1
+        holder.appName.text = app.loadLabel(packageManager)
+        holder.packageName.text = app.packageName
 
         // Create language spinner adapter
         val spinnerAdapter = object : ArrayAdapter<String>(
             context,
             android.R.layout.simple_spinner_item,
-            availableLanguages.map { it.second }
+            availableLanguages.map { it.first } // Use language code instead of full name
         ) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
                 val view = super.getView(position, convertView, parent)
                 val textView = view.findViewById<TextView>(android.R.id.text1)
                 // Show language code in the selected view
-                val languageCode = availableLanguages[position].first
-                textView.text = "$languageCode"
+                textView.text = availableLanguages[position].first
                 textView.textSize = 14f  // Smaller text size
                 textView.setPadding(8, 0, 8, 0)  // Reduce padding
                 return view
             }
 
-            override fun getDropDownView(dropDownPosition: Int, convertView: View?, parent: ViewGroup): View {
-                val view = super.getDropDownView(dropDownPosition, convertView, parent)
+            override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View {
+                val view = super.getDropDownView(position, convertView, parent)
                 val textView = view.findViewById<TextView>(android.R.id.text1)
                 // Show full language name in dropdown
-                textView.text = availableLanguages[dropDownPosition].second
+                textView.text = "${availableLanguages[position].first} - ${availableLanguages[position].second}"
                 return view
             }
-        }.apply {
-            setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         }
+        
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         holder.languageSpinner.adapter = spinnerAdapter
 
         // Set the selected language
-        val currentLanguage = languageMappings[packageName] ?: Constants.DEFAULT_LANGUAGE
+        val currentLanguage = languageMappings[app.packageName] ?: ""
         val languageIndex = availableLanguages.indexOfFirst { it.first == currentLanguage }
         if (languageIndex >= 0) {
             holder.languageSpinner.setSelection(languageIndex)
         }
 
         // Set listener for language selection
-        holder.languageSpinner.setOnItemSelectedListener { position ->
-            val selectedLanguageCode = availableLanguages[position].first
-            languageMappings[packageName] = selectedLanguageCode
-            onLanguageSelected(packageName, selectedLanguageCode)
+        holder.languageSpinner.setOnItemSelectedListener { pos ->
+            val selectedLanguageCode = availableLanguages[pos].first
+            languageMappings[app.packageName] = selectedLanguageCode
+            onLanguageSelected(app.packageName, selectedLanguageCode)
         }
     }
 
     override fun getItemCount() = appList.size
 
-    // Method to update the list for filtering
-    fun updateFilteredList(newList: List<ApplicationInfo>) {
+    fun updateList(newList: List<ApplicationInfo>) {
         appList = newList
         notifyDataSetChanged()
     }
-
-    // Method to filter the list based on user input (kept for backward compatibility)
-    fun filter(query: String) {
-        val filteredList = if (query.isEmpty()) {
-            fullAppList
-        } else {
-            fullAppList.filter { app -> 
-                app.loadLabel(packageManager).toString().contains(query, ignoreCase = true) || 
-                app.packageName.contains(query, ignoreCase = true)
-            }
-        }
-        appList = filteredList
-        notifyDataSetChanged()
-    }
-
+    
     // Extension function to simplify setting item selected listener
     private fun Spinner.setOnItemSelectedListener(onItemSelected: (Int) -> Unit) {
         this.setOnItemSelectedListener(object : android.widget.AdapterView.OnItemSelectedListener {
