@@ -29,14 +29,14 @@ object LanguageUtils {
     fun getAllLanguageMappings(prefs: SharedPreferences): Map<String, String> {
         val map = mutableMapOf<String, String>()
         val allPrefs = prefs.all
-        
+
         for ((key, value) in allPrefs) {
             // Skip any non-string values or the PREF_APP_LANGUAGE_MAP key if it still exists
             if (value is String && key != com.rel.languager.Constants.PREF_APP_LANGUAGE_MAP) {
                 map[key] = value
             }
         }
-        
+
         return map
     }
 
@@ -45,8 +45,9 @@ object LanguageUtils {
      */
     fun getAvailableLanguages(): List<Pair<String, String>> {
         return listOf(
-            Pair(DEFAULT_LANGUAGE, "System Default"),
+            Pair(DEFAULT_LANGUAGE, "Default"),
             Pair("en", "English"),
+            Pair("he", "Hebrew"),
             Pair("fr", "French"),
             Pair("de", "German"),
             Pair("es", "Spanish"),
@@ -78,12 +79,8 @@ object LanguageUtils {
      * Get a locale for the specified language code
      */
     fun getLocaleForLanguage(languageCode: String): Locale {
-        // If default language (SYS), return system default locale
-        if (languageCode == DEFAULT_LANGUAGE) {
-            return Locale.getDefault()
-        }
-        
         return when (languageCode) {
+            DEFAULT_LANGUAGE -> Locale.getDefault()
             "en" -> Locale.ENGLISH
             "fr" -> Locale.FRENCH
             "de" -> Locale.GERMAN
@@ -91,6 +88,7 @@ object LanguageUtils {
             "ja" -> Locale.JAPANESE
             "ko" -> Locale.KOREAN
             "zh" -> Locale.CHINESE
+            "he" -> Locale("he")
             "es" -> Locale("es")
             "pt" -> Locale("pt")
             "ru" -> Locale("ru")
