@@ -41,46 +41,47 @@ class AppLanguageAdapter(
         holder.appName.text = app.loadLabel(packageManager)
         holder.packageName.text = app.packageName
 
-        // Create language spinner adapter
         val spinnerAdapter = object : ArrayAdapter<String>(
             context,
             android.R.layout.simple_spinner_item,
-            availableLanguages.map { it.first } // Use language code instead of full name
+            availableLanguages.map { it.first }
         ) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
                 val view = super.getView(position, convertView, parent)
                 val textView = view.findViewById<TextView>(android.R.id.text1)
-                // Show language code in the selected view
+
                 textView.text = availableLanguages[position].first
-                textView.textSize = 14f  // Smaller text size
-                textView.setPadding(8, 0, 8, 0)  // Reduce padding
+                textView.textSize = 14f
+                textView.setPadding(8, 0, 8, 0)
                 return view
             }
 
             override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup): View {
                 val view = super.getDropDownView(position, convertView, parent)
                 val textView = view.findViewById<TextView>(android.R.id.text1)
-                // Show full language name in dropdown
+
                 textView.text = "${availableLanguages[position].first} - ${availableLanguages[position].second}"
                 return view
             }
         }
-        
+
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         holder.languageSpinner.adapter = spinnerAdapter
 
-        // Set the selected language
         val currentLanguage = languageMappings[app.packageName] ?: ""
         val languageIndex = availableLanguages.indexOfFirst { it.first == currentLanguage }
         if (languageIndex >= 0) {
             holder.languageSpinner.setSelection(languageIndex)
         }
 
-        // Set listener for language selection
         holder.languageSpinner.setOnItemSelectedListener { pos ->
             val selectedLanguageCode = availableLanguages[pos].first
-            languageMappings[app.packageName] = selectedLanguageCode
-            onLanguageSelected(app.packageName, selectedLanguageCode)
+            val currentLanguageCode = languageMappings[app.packageName] ?: Constants.DEFAULT_LANGUAGE
+
+            if (selectedLanguageCode != currentLanguageCode) {
+                languageMappings[app.packageName] = selectedLanguageCode
+                onLanguageSelected(app.packageName, selectedLanguageCode)
+            }
         }
     }
 
@@ -90,8 +91,7 @@ class AppLanguageAdapter(
         appList = newList
         notifyDataSetChanged()
     }
-    
-    // Extension function to simplify setting item selected listener
+
     private fun Spinner.setOnItemSelectedListener(onItemSelected: (Int) -> Unit) {
         this.setOnItemSelectedListener(object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(
@@ -104,7 +104,7 @@ class AppLanguageAdapter(
             }
 
             override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {
-                // Do nothing
+                return
             }
         })
     }

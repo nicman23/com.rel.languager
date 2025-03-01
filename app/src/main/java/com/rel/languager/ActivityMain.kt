@@ -65,7 +65,7 @@ class ActivityMain : AppCompatActivity() {
         setupListeners()
         loadLanguageMappings()
         loadEnabledApps()
-        
+
         setupBackPressHandling()
     }
 
@@ -107,7 +107,7 @@ class ActivityMain : AppCompatActivity() {
             isSubmitButtonEnabled = false
             isFocusable = true
             isIconified = false
-            clearFocus() 
+            clearFocus()
 
             val searchText = findViewById<EditText>(androidx.appcompat.R.id.search_src_text)
             searchText?.apply {
@@ -145,6 +145,7 @@ class ActivityMain : AppCompatActivity() {
             val mappings = LanguageUtils.getAllLanguageMappings(preferences)
             languageMappings.putAll(mappings)
         }
+
         hasUnsavedChanges = false
     }
 
@@ -152,20 +153,20 @@ class ActivityMain : AppCompatActivity() {
         try {
             pref?.let { preferences ->
                 val editor = preferences.edit()
-                
+
                 val allPrefs = preferences.all
                 for (key in allPrefs.keys) {
                     if (key != Constants.PREF_APP_LANGUAGE_MAP) {
                         editor.remove(key)
                     }
                 }
-                
+
                 for ((packageName, languageCode) in languageMappings) {
                     if (languageCode != Constants.DEFAULT_LANGUAGE) {
                         editor.putString(packageName, languageCode)
                     }
                 }
-                
+
                 editor.apply()
             }
 
@@ -174,7 +175,7 @@ class ActivityMain : AppCompatActivity() {
                 R.string.settings_saved,
                 Snackbar.LENGTH_SHORT
             ).show()
-            
+
             hasUnsavedChanges = false
         } catch (e: Exception) {
             Snackbar.make(
