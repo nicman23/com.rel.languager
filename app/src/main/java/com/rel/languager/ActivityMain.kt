@@ -132,27 +132,44 @@ class ActivityMain : AppCompatActivity() {
         }
     }
 
+    /**
+     * Load language mappings from SharedPreferences
+     */
     private fun loadLanguageMappings() {
-        val languageMapJson = pref?.getString(PREF_APP_LANGUAGE_MAP, "{}")
-        try {
-            val jsonObject = JSONObject(languageMapJson ?: "{}")
-            val keys = jsonObject.keys()
-            while (keys.hasNext()) {
-                val key = keys.next()
-                languageMappings[key] = jsonObject.getString(key)
-            }
-        } catch (e: Exception) {
-            // If there's an error, we'll start with an empty map
+        languageMappings.clear()
+        pref?.let { preferences ->
+            val mappings = LanguageUtils.getAllLanguageMappings(preferences)
+            languageMappings.putAll(mappings)
         }
     }
 
+    /**
+     * Save language mappings to SharedPreferences
+     */
     private fun saveLanguageMappings() {
         try {
-            val jsonObject = JSONObject()
-            for ((packageName, languageCode) in languageMappings) {
-                jsonObject.put(packageName, languageCode)
+            // Save each language mapping directly to SharedPreferences
+            pref?.let { preferences ->
+                val editor = preferences.edit()
+                
+                // First, clear any old mappings (excluding any non-language preferences)
+                val allPrefs = preferences.all
+                for (key in allPrefs.keys) {
+                    if (key != Constants.PREF_APP_LANGUAGE_MAP) {
+                        editor.remove(key)
+                    }
+                }
+                
+                // Now add all current mappings
+                for ((packageName, languageCode) in languageMappings) {
+                    // Only save non-default language preferences
+                    if (languageCode != Constants.DEFAULT_LANGUAGE) {
+                        editor.putString(packageName, languageCode)
+                    }
+                }
+                
+                editor.apply()
             }
-            pref?.edit()?.putString(PREF_APP_LANGUAGE_MAP, jsonObject.toString())?.apply()
 
             Snackbar.make(
                 findViewById(R.id.root_view_for_snackbar),
