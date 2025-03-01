@@ -13,6 +13,11 @@
     <string name="app_icon">App icon</string>
     <string name="select_language">Select language</string>
     <string name="default_language">Default</string>
+    <string name="unsaved_changes_title">Unsaved Changes</string>
+    <string name="unsaved_changes_message">You have unsaved changes. What would you like to do?</string>
+    <string name="save_and_exit">Save and Exit</string>
+    <string name="discard_and_exit">Discard and Exit</string>
+    <string name="cancel">Cancel</string>
     <string-array name="module_scope">
         <item>com.linkedin.android</item>
         <item>com.instagram.android</item>

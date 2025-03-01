@@ -9,29 +9,19 @@ import java.util.Locale
  */
 object LanguageUtils {
 
-    /**
-     * Get the language code for a specific package
-     */
     fun getLanguageForPackage(packageName: String, prefs: SharedPreferences): String {
         return prefs.getString(packageName, DEFAULT_LANGUAGE) ?: DEFAULT_LANGUAGE
     }
 
-    /**
-     * Set the language for a specific package
-     */
     fun setLanguageForPackage(packageName: String, languageCode: String, prefs: SharedPreferences) {
         prefs.edit().putString(packageName, languageCode).apply()
     }
 
-    /**
-     * Get all app-language mappings
-     */
     fun getAllLanguageMappings(prefs: SharedPreferences): Map<String, String> {
         val map = mutableMapOf<String, String>()
         val allPrefs = prefs.all
 
         for ((key, value) in allPrefs) {
-            // Skip any non-string values or the PREF_APP_LANGUAGE_MAP key if it still exists
             if (value is String && key != com.rel.languager.Constants.PREF_APP_LANGUAGE_MAP) {
                 map[key] = value
             }
@@ -40,9 +30,6 @@ object LanguageUtils {
         return map
     }
 
-    /**
-     * Get a list of available languages with their codes and display names
-     */
     fun getAvailableLanguages(): List<Pair<String, String>> {
         return listOf(
             Pair(DEFAULT_LANGUAGE, "Default"),
@@ -75,9 +62,6 @@ object LanguageUtils {
         )
     }
 
-    /**
-     * Get a locale for the specified language code
-     */
     fun getLocaleForLanguage(languageCode: String): Locale {
         return when (languageCode) {
             DEFAULT_LANGUAGE -> Locale.getDefault()

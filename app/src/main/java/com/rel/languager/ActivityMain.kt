@@ -4,11 +4,11 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
@@ -27,14 +27,6 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 class ActivityMain : AppCompatActivity() {
-    /**
-     * Normally [MODE_WORLD_READABLE] causes a crash.
-     * But if "xposedsharedprefs" flag is present in AndroidManifest,
-     * then the file is accordingly taken care by lsposed framework.
-     *
-     * If an exception is thrown, means module is not enabled,
-     * hence Android throws a security exception.
-     */
     private val pref by lazy {
         try {
             getSharedPreferences(SHARED_PREF_FILE_NAME, MODE_WORLD_READABLE)
@@ -51,16 +43,15 @@ class ActivityMain : AppCompatActivity() {
     private val enabledApps = mutableListOf<ApplicationInfo>()
     private val languageMappings = mutableMapOf<String, String>()
     private val mainScope = CoroutineScope(Dispatchers.Main)
+    private var hasUnsavedChanges = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Set up toolbar
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
 
-        // Check if module is enabled
         if (pref == null) {
             AlertDialog.Builder(this)
                 .setMessage(R.string.module_not_enabled)
@@ -70,11 +61,35 @@ class ActivityMain : AppCompatActivity() {
             return
         }
 
-        // Initialize UI elements
         initializeViews()
         setupListeners()
         loadLanguageMappings()
         loadEnabledApps()
+        
+        setupBackPressHandling()
+    }
+
+    private fun setupBackPressHandling() {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (hasUnsavedChanges) {
+                    AlertDialog.Builder(this@ActivityMain)
+                        .setTitle(R.string.unsaved_changes_title)
+                        .setMessage(R.string.unsaved_changes_message)
+                        .setPositiveButton(R.string.save_and_exit) { _, _ ->
+                            saveLanguageMappings()
+                            finish()
+                        }
+                        .setNegativeButton(R.string.discard_and_exit) { _, _ ->
+                            finish()
+                        }
+                        .setNeutralButton(R.string.cancel, null)
+                        .show()
+                } else {
+                    finish()
+                }
+            }
+        })
     }
 
     private fun initializeViews() {
@@ -84,32 +99,25 @@ class ActivityMain : AppCompatActivity() {
         noAppsText = findViewById(R.id.no_apps_text)
         saveButton = findViewById(R.id.save_button)
 
-        // Set up RecyclerView
         appListRecyclerView.layoutManager = LinearLayoutManager(this)
     }
 
     private fun setupListeners() {
-        // Set up search functionality
         searchView.apply {
             isSubmitButtonEnabled = false
             isFocusable = true
             isIconified = false
-            clearFocus() // Clear initial focus to prevent keyboard from showing automatically
+            clearFocus() 
 
-            // Set text colors for the SearchView
             val searchText = findViewById<EditText>(androidx.appcompat.R.id.search_src_text)
             searchText?.apply {
                 setTextColor(ContextCompat.getColor(this@ActivityMain, android.R.color.white))
                 setHintTextColor(ContextCompat.getColor(this@ActivityMain, R.color.teal_200))
-                // Change cursor color to white
                 try {
-                    // Get the cursor drawable field
                     val cursorDrawableField = TextView::class.java.getDeclaredField("mCursorDrawableRes")
                     cursorDrawableField.isAccessible = true
-                    // Set cursor color to white
                     cursorDrawableField.set(this, R.drawable.white_cursor)
                 } catch (e: Exception) {
-                    // Ignore if we can't change the cursor color
                 }
             }
 
@@ -126,33 +134,25 @@ class ActivityMain : AppCompatActivity() {
             })
         }
 
-        // Set up save button
         saveButton.setOnClickListener {
             saveLanguageMappings()
         }
     }
 
-    /**
-     * Load language mappings from SharedPreferences
-     */
     private fun loadLanguageMappings() {
         languageMappings.clear()
         pref?.let { preferences ->
             val mappings = LanguageUtils.getAllLanguageMappings(preferences)
             languageMappings.putAll(mappings)
         }
+        hasUnsavedChanges = false
     }
 
-    /**
-     * Save language mappings to SharedPreferences
-     */
     private fun saveLanguageMappings() {
         try {
-            // Save each language mapping directly to SharedPreferences
             pref?.let { preferences ->
                 val editor = preferences.edit()
                 
-                // First, clear any old mappings (excluding any non-language preferences)
                 val allPrefs = preferences.all
                 for (key in allPrefs.keys) {
                     if (key != Constants.PREF_APP_LANGUAGE_MAP) {
@@ -160,9 +160,7 @@ class ActivityMain : AppCompatActivity() {
                     }
                 }
                 
-                // Now add all current mappings
                 for ((packageName, languageCode) in languageMappings) {
-                    // Only save non-default language preferences
                     if (languageCode != Constants.DEFAULT_LANGUAGE) {
                         editor.putString(packageName, languageCode)
                     }
@@ -176,6 +174,8 @@ class ActivityMain : AppCompatActivity() {
                 R.string.settings_saved,
                 Snackbar.LENGTH_SHORT
             ).show()
+            
+            hasUnsavedChanges = false
         } catch (e: Exception) {
             Snackbar.make(
                 findViewById(R.id.root_view_for_snackbar),
@@ -204,15 +204,14 @@ class ActivityMain : AppCompatActivity() {
                     noAppsText.visibility = View.VISIBLE
                     noAppsText.text = getString(R.string.no_apps_found)
                 } else {
-                    // Create and set the adapter
                     val adapter = AppLanguageAdapter(
                         this@ActivityMain,
                         enabledApps,
                         languageMappings,
                         LanguageUtils.getAvailableLanguages()
                     ) { packageName, languageCode ->
-                        // Update language mapping when spinner selection changes
                         languageMappings[packageName] = languageCode
+                        hasUnsavedChanges = true
                     }
 
                     appListRecyclerView.adapter = adapter
@@ -229,7 +228,6 @@ class ActivityMain : AppCompatActivity() {
 
     private suspend fun getEnabledApps(): List<ApplicationInfo> = withContext(Dispatchers.IO) {
         val pm = packageManager
-        @Suppress("DEPRECATION")
         val installedApps = pm.getInstalledApplications(0)
 
         return@withContext installedApps.filter { app ->
