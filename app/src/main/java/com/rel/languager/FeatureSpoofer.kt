@@ -1,28 +1,24 @@
 package com.rel.languager
 
-import android.content.res.Configuration
-import android.content.res.Resources
-import android.os.Build
-import android.util.Log
-import com.rel.languager.Constants.SHARED_PREF_FILE_NAME
-import de.robv.android.xposed.*
-import de.robv.android.xposed.callbacks.XC_LoadPackage
 import java.util.Locale
+import android.util.Log
+import android.os.Build
+import de.robv.android.xposed.*
 import java.util.Locale.Category
+import android.content.res.Resources
+import android.content.res.Configuration
+import de.robv.android.xposed.callbacks.XC_LoadPackage
+import com.rel.languager.Constants.SHARED_PREF_FILE_NAME
 
 class FeatureSpoofer: IXposedHookLoadPackage {
     private fun log(message: String) {
         XposedBridge.log("[Languager] $message")
     }
 
-    /**
-     * To read preference of user.
-     */
     private val pref by lazy {
         XSharedPreferences(BuildConfig.APPLICATION_ID, SHARED_PREF_FILE_NAME).apply {
-            reload() // Ensure we have the latest preferences
+            reload()
 
-            // Check if preferences are readable
             if (!file.canRead()) {
                 log("ERROR: Preference file is not readable!")
                 makeWorldReadable()
@@ -30,9 +26,6 @@ class FeatureSpoofer: IXposedHookLoadPackage {
         }
     }
 
-    /**
-     * Attempt to make the preferences file world-readable
-     */
     private fun XSharedPreferences.makeWorldReadable() {
         try {
             val chmod = Runtime.getRuntime().exec("chmod 664 ${file.absolutePath}")
@@ -56,16 +49,13 @@ class FeatureSpoofer: IXposedHookLoadPackage {
                 return
             }
 
-            val locale = LanguageUtils.getLocaleForLanguage(languageCode)
-            hookLocaleAPIs(lpparam, locale, languageCode, packageName)
+            hookLocaleAPIs(lpparam, Locale(languageCode))
         }
     }
 
     private fun hookLocaleAPIs(
         lpparam: XC_LoadPackage.LoadPackageParam,
-        locale: Locale,
-        languageCode: String,
-        packageName: String
+        locale: Locale
     ) {
         try {
             hookCommonLocaleAPIs(lpparam, locale)

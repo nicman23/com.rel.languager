@@ -1,22 +1,23 @@
 package com.rel.languager
 
-import android.content.Context
-import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
-import android.view.LayoutInflater
+import java.util.Locale
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.ImageView
 import android.widget.Spinner
 import android.widget.TextView
+import android.content.Context
+import android.widget.ImageView
+import android.view.LayoutInflater
+import android.widget.ArrayAdapter
+import android.content.pm.PackageManager
+import android.content.pm.ApplicationInfo
 import androidx.recyclerview.widget.RecyclerView
 
 class AppLanguageAdapter(
     private val context: Context,
     private var appList: List<ApplicationInfo>,
     private val languageMappings: MutableMap<String, String>,
-    private val availableLanguages: List<Pair<String, String>> = LanguageUtils.getAvailableLanguages(),
+    private val availableLanguages: List<Locale> = LanguageUtils.getAvailableLanguages(),
     private val onLanguageSelected: (String, String) -> Unit
 ) : RecyclerView.Adapter<AppLanguageAdapter.ViewHolder>() {
 
@@ -36,7 +37,6 @@ class AppLanguageAdapter(
         val app = appList[position]
         val packageManager = context.packageManager
 
-        // Set app icon and name
         holder.appIcon.setImageDrawable(app.loadIcon(packageManager))
         holder.appName.text = app.loadLabel(packageManager)
         holder.packageName.text = app.packageName
@@ -44,13 +44,13 @@ class AppLanguageAdapter(
         val spinnerAdapter = object : ArrayAdapter<String>(
             context,
             android.R.layout.simple_spinner_item,
-            availableLanguages.map { it.first }
+            availableLanguages.map { it.displayName }
         ) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
                 val view = super.getView(position, convertView, parent)
                 val textView = view.findViewById<TextView>(android.R.id.text1)
 
-                textView.text = availableLanguages[position].first
+                textView.text = availableLanguages[position].language
                 textView.textSize = 14f
                 textView.setPadding(8, 0, 8, 0)
                 return view
@@ -60,7 +60,7 @@ class AppLanguageAdapter(
                 val view = super.getDropDownView(position, convertView, parent)
                 val textView = view.findViewById<TextView>(android.R.id.text1)
 
-                textView.text = "${availableLanguages[position].first} - ${availableLanguages[position].second}"
+                textView.text = availableLanguages[position].displayName
                 return view
             }
         }
@@ -69,13 +69,13 @@ class AppLanguageAdapter(
         holder.languageSpinner.adapter = spinnerAdapter
 
         val currentLanguage = languageMappings[app.packageName] ?: ""
-        val languageIndex = availableLanguages.indexOfFirst { it.first == currentLanguage }
+        val languageIndex = availableLanguages.indexOfFirst { it.language == currentLanguage }
         if (languageIndex >= 0) {
             holder.languageSpinner.setSelection(languageIndex)
         }
 
         holder.languageSpinner.setOnItemSelectedListener { pos ->
-            val selectedLanguageCode = availableLanguages[pos].first
+            val selectedLanguageCode = availableLanguages[pos].language
             val currentLanguageCode = languageMappings[app.packageName] ?: Constants.DEFAULT_LANGUAGE
 
             if (selectedLanguageCode != currentLanguageCode) {
