@@ -41,7 +41,6 @@ object LanguageUtils {
             Pair("it", "Italian"),
             Pair("pt", "Portuguese"),
             Pair("ru", "Russian"),
-            Pair("zh", "Chinese"),
             Pair("ja", "Japanese"),
             Pair("ko", "Korean"),
             Pair("ar", "Arabic"),
@@ -58,20 +57,22 @@ object LanguageUtils {
             Pair("tr", "Turkish"),
             Pair("nl", "Dutch"),
             Pair("pl", "Polish"),
-            Pair("sv", "Swedish")
+            Pair("sv", "Swedish"),
+            Pair("zh-CN", "Chinese-CN"),
+            Pair("zh-TW", "Chinese-TW")
         )
     }
 
     fun getLocaleForLanguage(languageCode: String): Locale {
         return when (languageCode) {
-            DEFAULT_LANGUAGE -> Locale.getDefault()
-            "en" -> Locale.ENGLISH
-            "fr" -> Locale.FRENCH
-            "de" -> Locale.GERMAN
-            "it" -> Locale.ITALIAN
-            "ja" -> Locale.JAPANESE
-            "ko" -> Locale.KOREAN
-            "zh" -> Locale.CHINESE
+            "en" -> Locale("en")
+            "fr" -> Locale("fr")
+            "de" -> Locale("de")
+            "it" -> Locale("it")
+            "ja" -> Locale("ja")
+            "ko" -> Locale("ko")
+            "zh-CN" -> Locale("zh", "CN")
+            "zh-TW" -> Locale("zh", "TW")
             "he" -> Locale("he")
             "es" -> Locale("es")
             "pt" -> Locale("pt")
