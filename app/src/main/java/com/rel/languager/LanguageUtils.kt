@@ -1,8 +1,8 @@
 package com.rel.languager
-
-import android.content.SharedPreferences
 import com.rel.languager.Constants.DEFAULT_LANGUAGE
+
 import java.util.Locale
+import android.content.SharedPreferences
 
 object LanguageUtils {
     fun getLanguageForPackage(packageName: String, prefs: SharedPreferences): String {
@@ -15,9 +15,8 @@ object LanguageUtils {
 
     fun getAllLanguageMappings(prefs: SharedPreferences): Map<String, String> {
         val map = mutableMapOf<String, String>()
-        val allPrefs = prefs.all
 
-        for ((key, value) in allPrefs) {
+        for ((key, value) in prefs.all) {
             if (value is String && key != com.rel.languager.Constants.PREF_APP_LANGUAGE_MAP) {
                 map[key] = value
             }
