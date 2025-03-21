@@ -1,8 +1,8 @@
 package com.rel.languager
 
-import java.util.Locale
 import android.content.SharedPreferences
 import com.rel.languager.Constants.DEFAULT_LANGUAGE
+import java.util.Locale
 
 object LanguageUtils {
     fun getLanguageForPackage(packageName: String, prefs: SharedPreferences): String {
@@ -27,35 +27,14 @@ object LanguageUtils {
     }
 
     fun getAvailableLanguages(): List<Locale> {
-        return listOf(
-            Locale.getDefault(),
-            Locale("en"),
-            Locale("he"),
-            Locale("fr"),
-            Locale("de"),
-            Locale("es"),
-            Locale("it"),
-            Locale("pt"),
-            Locale("ru"),
-            Locale("ja"),
-            Locale("ko"),
-            Locale("ar"),
-            Locale("hi"),
-            Locale("bn"),
-            Locale("pa"),
-            Locale("ta"),
-            Locale("te"),
-            Locale("ml"),
-            Locale("th"),
-            Locale("vi"),
-            Locale("id"),
-            Locale("ms"),
-            Locale("tr"),
-            Locale("nl"),
-            Locale("pl"),
-            Locale("sv"),
-            Locale("zh", "CN"),
-            Locale("zh", "TW")
-        )
+        val localeList =
+                Locale.getAvailableLocales().toList().distinctBy { it.language }.toMutableList()
+        // replace chinese with simplified chinese
+        localeList.removeIf { it.language == "zh" }
+
+        localeList.add(Locale("zh", "CN"))
+        localeList.add(Locale("zh", "TW"))
+
+        return localeList.sortedBy { it.getDisplayLanguage(Locale.ENGLISH) }
     }
 }
