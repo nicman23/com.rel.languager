@@ -9,10 +9,6 @@ object LanguageUtils {
         return prefs.getString(packageName, DEFAULT_LANGUAGE) ?: DEFAULT_LANGUAGE
     }
 
-    fun setLanguageForPackage(packageName: String, languageCode: String, prefs: SharedPreferences) {
-        prefs.edit().putString(packageName, languageCode).apply()
-    }
-
     fun getAllLanguageMappings(prefs: SharedPreferences): Map<String, String> {
         val map = mutableMapOf<String, String>()
 
