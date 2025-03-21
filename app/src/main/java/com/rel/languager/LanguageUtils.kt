@@ -27,14 +27,11 @@ object LanguageUtils {
     }
 
     fun getAvailableLanguages(): List<Locale> {
-        val localeList =
-                Locale.getAvailableLocales().toList().distinctBy { it.language }.toMutableList()
-        // replace chinese with simplified chinese
-        localeList.removeIf { it.language == "zh" }
+        val localeList = Locale.getAvailableLocales().toMutableList()
 
-        localeList.add(Locale("zh", "CN"))
-        localeList.add(Locale("zh", "TW"))
+        localeList.sortBy { it.getDisplayLanguage(Locale.getDefault()) }
+        localeList.add(0, Locale.getDefault())
 
-        return localeList.sortedBy { it.getDisplayLanguage(Locale.ENGLISH) }
+        return localeList.distinct().toMutableList()
     }
 }
