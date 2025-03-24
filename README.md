@@ -112,6 +112,12 @@ You can also install Languager directly from the LSPosed repository:
 
 1. Find the APK at `app/build/outputs/apk/debug/app-debug.apk`
 
+### With docker 
+1. cd in this repo
+2. docker run -ti --rm -v "$PWD":/home/mobiledevops/app mobiledevops/android-sdk-image /bin/bash --login -c 'export PATH=/home/mobiledevops/.sdkman/candidates/gradle/current/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/android-sdk-linux/cmdline-tools:/opt/android-sdk-linux/cmdline-tools/bin:/opt/android-sdk-linux/platform-tools; sh ./gradlew assembleDebug'
+3. Find the APK at `app/build/outputs/apk/debug/app-debug.apk`
+
+
 ## Troubleshooting
 - **Module not working**: Make sure it's enabled in LSPosed/EdXposed Manager
 - **Language not changing**: Try restarting the app or rebooting your device
