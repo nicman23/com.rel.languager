@@ -34,7 +34,8 @@ object LanguageUtils {
 
         localeList.add(Locale("zh", "CN"))
         localeList.add(Locale("zh", "TW"))
+        localeList.add(Locale("el", "GR"))
 
-        return localeList.sortedBy { it.getDisplayLanguage(Locale.ENGLISH) }
+        return localeList
     }
 }
